@@ -14,6 +14,40 @@ If you're unhappy with this script - try [alternatives](https://wiki.debian.org/
 
 ## Prerequisites / installation
 
+### TL;DR (*copy/paste*):
+
+```sh
+# install dependencies
+sudo apt install make findutils gpg gpgconf xz-utils bzip2 zstd rsync file
+
+# prepare directories
+[ -d "$HOME/bin" ]     || { mkdir -p "$HOME/bin" ;     chmod 0755 "$HOME/bin" ; }
+[ -d "$HOME/.config" ] || { mkdir -p "$HOME/.config" ; chmod 0700 "$HOME/.config" ; }
+
+# download scripts
+curl -L -o "$HOME/bin/update-repo"    https://github.com/rockdrilla/simple-apt-repo/raw/master/simple-apt-repo.sh
+curl -L -o "$HOME/bin/update-repo.mk" https://github.com/rockdrilla/simple-apt-repo/raw/master/simple-apt-repo.sh.mk
+
+# set correct permissions for script
+chmod a+x "$HOME/bin/update-repo"
+
+# setup default (but not valid) config
+[ -f "$HOME/.config/simplerepo" ] || {
+cat > "$HOME/.config/simplerepo" <<EOF
+repo_root='/var/www/deb'
+name='SimpleAptRepo'
+desc='custom Debian packages for folks'
+web='http://example.com/deb'
+GNUPGHOME='$HOME/.gnupg'
+EOF
+echo "edit your config at '$HOME/.config/simplerepo' appropriately"
+}
+
+echo 'installation is done; run script as ~/bin/update-repo'
+```
+
+### detailed:
+
 `simple-apt-repo.sh` requires that you're already installed following packages:
 - `make` - GNU Make;
 - `findutils` - GNU findutils;
@@ -29,21 +63,38 @@ Run following command to fulfill these requirements:
 sudo apt install make findutils gpg gpgconf xz-utils bzip2 zstd rsync file
 ```
 
-*There's also a companion script - `simple-apt-repo.sh.mk` - which is special [Makefile](https://en.wikipedia.org/wiki/Make_(software)#Makefile) to deal with recursive recipes and other magic.*
-
 Copy `simple-apt-repo.sh` [[link]](https://github.com/rockdrilla/simple-apt-repo/raw/master/simple-apt-repo.sh)
 and `simple-apt-repo.sh.mk` [[link]](https://github.com/rockdrilla/simple-apt-repo/raw/master/simple-apt-repo.sh.mk)
 to your preferred location (e.g. `~/bin/`).
 
-Nota bene: only `simple-apt-repo.sh` requires 'executable' bit set:
-```
-chmod +x /your/preferred/location/simple-apt-repo.sh
-```
+*`simple-apt-repo.sh.mk` - special [Makefile](https://en.wikipedia.org/wiki/Make_(software)#Makefile) companion script.*
+
+Nota bene: only `simple-apt-repo.sh` requires 'executable' bit set.
+
+---
 
 Hint: you can rename file to whatever you want but also rename helper GNU Make file.
 
 Example: if you wish to rename `simple-apt-repo.sh` to `repo-upd`,
 then you'll need to rename `simple-apt-repo.sh.mk` to `repo-upd.mk`.
+
+---
+
+Hint: symlinks to scripts are working too!
+
+Consider following sample shell snippet:
+```sh
+# install
+git clone https://github.com/rockdrilla/simple-apt-repo.git ~/apt-repo.git
+ln -s ../apt-repo.git/simple-apt-repo.sh    ~/bin/update-repo
+ln -s ../apt-repo.git/simple-apt-repo.sh.mk ~/bin/update-repo.mk
+
+# post-install
+git -C ~/apt-repo.git config pull.ff only
+
+# update
+git -C ~/apt-repo.git pull
+```
 
 ## Usage
 
