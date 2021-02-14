@@ -52,16 +52,16 @@ endif
 ###############################################################################
 
 %.gz: %
-	@gzip -fk $(<)
+	@gzip -fk $(<) >/dev/null 2>/dev/null
 
 %.xz: %
-	@xz -fk $(<)
+	@xz -fk $(<) >/dev/null 2>/dev/null
 
 %.bz2: %
-	@bzip2 -fk $(<)
+	@bzip2 -fk $(<) >/dev/null 2>/dev/null
 
 %.zst: %
-	@zstd -fk $(<)
+	@zstd -fk $(<) >/dev/null 2>/dev/null
 
 ###############################################################################
 
@@ -324,6 +324,6 @@ deploy:
 	  -type d -exec touch -m -d @$(ts_now) '{}' '+' ; \
 	for i in $(foreach k,$(r/_),$(addprefix $(k)/,dists meta)) ; do   \
 	  mkdir -p $(repo_root)/$$i/ ;                                    \
-	  rsync -vca --delete-after $(work_root)/$$i/ $(repo_root)/$$i/ ; \
+	  rsync -ca --delete-after $(work_root)/$$i/ $(repo_root)/$$i/ ; \
 	done ;                                                            \
 	cp -a sources.list $(repo_root)/
