@@ -110,11 +110,11 @@ $(1)/dists/$(2)/main/source/Release: $(1)/dists/$(2)/$(3)/source/Release
 
 $(1)/dists/$(2)/main/binary-$(4)/Packages: $(1)/dists/$(2)/$(3)/binary-$(4)/Packages
 
-$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/main/binary-$(4)/,Release Packages $$(foreach x,gz xz bz2 zst,Packages.$$(x)))
+$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/main/binary-$(4)/,Release Packages $(foreach x,gz xz bz2 zst,Packages.$(x)))
 
 endif
 
-$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/$(3)/binary-$(4)/,Release Packages $$(foreach x,gz xz bz2 zst,Packages.$$(x)))
+$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/$(3)/binary-$(4)/,Release Packages $(foreach x,gz xz bz2 zst,Packages.$(x)))
 
 endef
 
@@ -122,7 +122,7 @@ define rules_component =
 
 $(1)/dists/$(2)/sources.list: $(1)/dists/$(2)/$(3)/sources.list
 
-$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/$(3)/source/,Release Sources $$(foreach x,gz xz bz2 zst,Sources.$$(x)))
+$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/$(3)/source/,Release Sources $(foreach x,gz xz bz2 zst,Sources.$(x)))
 
 $(1)/dists/$(2)/$(3)/sources.list: | $(1)/dists/$(2)/$(3)/source/Release $$(foreach a,$$(a/$(1)/$(2)/$(3)/_),$(1)/dists/$(2)/$(3)/binary-$$(a)/Release)
 	@$$(call mkdir_p,$$(@)); exec 0<&- ;     \
@@ -131,7 +131,7 @@ $(1)/dists/$(2)/$(3)/sources.list: | $(1)/dists/$(2)/$(3)/source/Release $$(fore
 	echo "# deb $$(web)/$(1) $(2) $(3)"    ; \
 	echo
 
-$(1)/dists/$(2)/$(3)/source/Release: $$(addprefix $(1)/dists/$(2)/$(3)/source/,$$(foreach x,gz xz bz2 zst,Sources.$$(x)))
+$(1)/dists/$(2)/$(3)/source/Release: $$(addprefix $(1)/dists/$(2)/$(3)/source/,$(foreach x,gz xz bz2 zst,Sources.$(x)))
 	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
 	touch $$(@) ; exec 1>$$(@) ;         \
 	echo 'Archive: $(2)' ;               \
@@ -145,7 +145,7 @@ $(1)/dists/$(2)/$(3)/source/Sources: $$(addprefix $(1)/meta/c/$(2)/$(3)/,$$(i/$(
 	touch $$(@) ; exec 1>$$(@) ;         \
 	for i in $$(^) ; do cat $$$$i ; echo ; done
 
-$(1)/dists/$(2)/$(3)/binary-%/Release: $$(addprefix $(1)/dists/$(2)/$(3)/binary-%/,$$(foreach x,gz xz bz2 zst,Packages.$$(x)))
+$(1)/dists/$(2)/$(3)/binary-%/Release: $$(addprefix $(1)/dists/$(2)/$(3)/binary-%/,$(foreach x,gz xz bz2 zst,Packages.$(x)))
 	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
 	touch $$(@) ; exec 1>$$(@) ;         \
 	echo 'Archive: $(2)' ;               \
@@ -196,7 +196,7 @@ $(1)/dists/$(2)/main/source/Sources:
 	touch $$(@) ; exec 1>$$(@) ;         \
 	for i in $$(^) ; do cat $$$$i ; echo ; done
 
-$(1)/dists/$(2)/main/binary-%/Release: $$(addprefix $(1)/dists/$(2)/main/binary-%/,$$(foreach x,gz xz bz2 zst,Packages.$$(x)))
+$(1)/dists/$(2)/main/binary-%/Release: $$(addprefix $(1)/dists/$(2)/main/binary-%/,$(foreach x,gz xz bz2 zst,Packages.$(x)))
 	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
 	touch $$(@) ; exec 1>$$(@) ;         \
 	echo 'Archive: $(2)' ;               \
@@ -210,7 +210,7 @@ $(1)/dists/$(2)/main/binary-%/Packages:
 	touch $$(@) ; exec 1>$$(@) ;         \
 	for i in $$(^) ; do cat $$$$i ; echo ; done
 
-$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/main/source/,Release Sources $$(foreach x,gz xz bz2 zst,Sources.$$(x)))
+$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/main/source/,Release Sources $(foreach x,gz xz bz2 zst,Sources.$(x)))
 
 $(1)/dists/$(2)/Release.head:
 	@$$(call mkdir_p,$$(@)); exec 0<&- ;        \
