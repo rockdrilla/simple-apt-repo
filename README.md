@@ -111,35 +111,33 @@ From here:
 Script generates following filesystem tree:
 
 ```
-/var/www/deb/
+/var/www/deb/buster/
 |
--> buster/
+-> dists/
    |
-   -> dists/
+   -> mongo/
       |
-      -> mongo/
+      -> InRelease
+      |
+      -> Release
+      |
+      -> Release.gpg
+      |
+      -> 3.4/
          |
-         -> InRelease
-         |
-         -> Release
-         |
-         -> Release.gpg
-         |
-         -> 3.4/
+         -> binary-amd64/
             |
-            -> binary-amd64/
-               |
-               -> Packages
-               |
-               -> Packages.gz
-               |
-               -> Packages.xz
-               |
-               -> Packages.bz2
-               |
-               -> Packages.zst
-               |
-               -> Release
+            -> Packages
+            |
+            -> Packages.gz
+            |
+            -> Packages.xz
+            |
+            -> Packages.bz2
+            |
+            -> Packages.zst
+            |
+            -> Release
 ```
 
 Resulting `apt sources` line will be:
@@ -148,7 +146,7 @@ Resulting `apt sources` line will be:
 deb http://example.com/deb/buster mongo 3.4
 ```
 
-Script also generates 'all-in-one' component `main` for each distribution - if and only if distribution doesn't have such component already.
+Script also generates 'all-in-one' component `main` for each distribution - **if and only if** distribution doesn't have such component already.
 
 So you can write `apt sources` line just like this:
 
