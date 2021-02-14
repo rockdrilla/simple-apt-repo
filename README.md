@@ -19,12 +19,14 @@ If you're unhappy with this script - try [alternatives](https://wiki.debian.org/
 - `findutils` - GNU findutils;
 - `gpg` and `gpgconf` - GnuPG (GNU Privacy Guard);
 - `xz-utils` - XZ compression utilities;
+- `bzip2` - Bzip2 compression utilities;
+- `zstd` - ZSTD compression utilities;
 - `rsync` - rsync (versatile file-copying tool);
 - `file` - file type recognition tool (not really needed by this script, just last-resort tool).
 
 Run following command to fulfill these requirements:
 ```
-sudo apt install make findutils gpg gpgconf xz-utils rsync file
+sudo apt install make findutils gpg gpgconf xz-utils bzip2 zstd rsync file
 ```
 
 *There's also a companion script - `simple-apt-repo.sh.mk` - which is special [Makefile](https://en.wikipedia.org/wiki/Make_(software)#Makefile) to deal with recursive recipes and other magic.*
@@ -132,6 +134,10 @@ Script generates following filesystem tree:
                -> Packages.gz
                |
                -> Packages.xz
+               |
+               -> Packages.bz2
+               |
+               -> Packages.zst
                |
                -> Release
 ```
