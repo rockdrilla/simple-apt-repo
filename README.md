@@ -101,6 +101,8 @@ git -C ~/apt-repo.git pull
 Just run `simple-apt-repo.sh` with no arguments are required...
 if you've set up all things already. ;)
 
+### Configuration:
+
 At first, set up simple configuration file in shell syntax (it's sourced by `simple-apt-repo.sh`).
 This file is stored as `~/.config/simplerepo`.
 
@@ -122,7 +124,11 @@ Brief overview of variables:
 - `web` - REQUIRED: HTTP web root for `repo_root` (set up your web-server accordingly)
 - `GNUPGHOME` - optional: home folder for your GnuPG setup (see below *"Few words about GnuPG"*)
 
+### Setting up your Web-server:
 
+Here's sample scripts for Nginx:
+- `aux/nginx.plain.conf` - serve (browsable) repository via (plain) HTTP
+- `aux/nginx.ssl.conf` - serve (browsable) repository via (plain) HTTP for [APT](https://en.wikipedia.org/wiki/APT_(software)) and via HTTPS for regular users (*he-he, "regular users"* xD)
 
 ## Filesystem layout
 
