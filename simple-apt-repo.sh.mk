@@ -322,8 +322,8 @@ deploy:
 	  -type d -exec chmod 755 '{}' '+' ;   \
 	find "$(work_root)/" -xdev -mindepth 1            \
 	  -type d -exec touch -m -d @$(ts_now) '{}' '+' ; \
-	for i in $(foreach k,$(r/_),$(addprefix $(k)/,dists meta)) ; do   \
-	  mkdir -p $(repo_root)/$$i/ ;                                    \
+	for i in $(foreach k,$(r/_),$(addprefix $(k)/,dists meta)) ; do  \
+	  mkdir -p $(repo_root)/$$i/ ;                                   \
 	  rsync -ca --delete-after $(work_root)/$$i/ $(repo_root)/$$i/ ; \
-	done ;                                                            \
+	done ;                                                           \
 	cp -a sources.list $(repo_root)/
