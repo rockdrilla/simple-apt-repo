@@ -4,11 +4,11 @@
 
 It's designed to be good for relatively small (IMO?) repositories.
 
-E.g., my own repo (hosted on dual-core VMware-based VM):
-- contains about \~200 packages
-- consumes about 1.8 Gb,
-- full repo rebuild takes about 25 seconds,
-- refreshing repo (with \~10% packages added/removed) takes about 15 seconds.
+E.g., my own repo (hosted on dual-core virtual private server):
+- contains about \~180 packages
+- consumes about 1.5 Gb,
+- full repo rebuild takes about 16 seconds,
+- refreshing repo (with \~10% packages added/removed) takes about 8 seconds.
 
 If you're unhappy with this script - try [alternatives](https://wiki.debian.org/DebianRepository/Setup)! :)
 
