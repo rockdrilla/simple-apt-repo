@@ -12,6 +12,8 @@ E.g., my own repo (hosted on dual-core virtual private server):
 
 If you're unhappy with this script - try [alternatives](https://wiki.debian.org/DebianRepository/Setup)! :)
 
+---
+
 ## Prerequisites / installation
 
 ### TL;DR (*copy/paste*):
@@ -59,7 +61,7 @@ echo 'installation is done; run script as ~/bin/update-repo'
 - `file` - file type recognition tool (not really needed by this script, just last-resort tool).
 
 Run following command to fulfill these requirements:
-```
+```sh
 sudo apt install make findutils gpg gpgconf xz-utils bzip2 zstd rsync file
 ```
 
@@ -67,7 +69,7 @@ Copy `simple-apt-repo.sh` [[link]](https://github.com/rockdrilla/simple-apt-repo
 and `simple-apt-repo.sh.mk` [[link]](https://github.com/rockdrilla/simple-apt-repo/raw/master/simple-apt-repo.sh.mk)
 to your preferred location (e.g. `~/bin/`).
 
-*`simple-apt-repo.sh.mk` - special [Makefile](https://en.wikipedia.org/wiki/Make_(software)#Makefile) companion script.*
+*`simple-apt-repo.sh.mk` - special companion script ([Makefile](https://en.wikipedia.org/wiki/Make_(software)#Makefile)).*
 
 Nota bene: only `simple-apt-repo.sh` requires 'executable' bit set.
 
@@ -86,6 +88,7 @@ Consider following sample shell snippet:
 ```sh
 # install
 git clone https://github.com/rockdrilla/simple-apt-repo.git ~/apt-repo.git
+# nota bene: ~/apt-repo.git/simple-apt-repo.sh has 0755 rights already
 ln -s ../apt-repo.git/simple-apt-repo.sh    ~/bin/update-repo
 ln -s ../apt-repo.git/simple-apt-repo.sh.mk ~/bin/update-repo.mk
 
@@ -95,6 +98,8 @@ git -C ~/apt-repo.git config pull.ff only
 # update
 git -C ~/apt-repo.git pull
 ```
+
+---
 
 ## Usage
 
@@ -124,35 +129,43 @@ Brief overview of variables:
 - `web` - REQUIRED: HTTP web root for `repo_root` (set up your web-server accordingly)
 - `GNUPGHOME` - optional: home folder for your GnuPG setup (see below *"Few words about GnuPG"*)
 
+---
+
 ### Setting up your Web-server:
 
 Here's sample scripts for Nginx:
 - `aux/nginx.plain.conf` - serve (browsable) repository via (plain) HTTP
 - `aux/nginx.ssl.conf` - serve (browsable) repository via (plain) HTTP for [APT](https://en.wikipedia.org/wiki/APT_(software)) and via HTTPS for regular users (*he-he, "regular users"* xD)
 
+---
+
 ## Filesystem layout
 
-`repo_root` is required to be filled like this:
+`$repo_root` is required to be filled like this:
 
-```
+```sh
 $repo_root/
 |
--> <channel>/
+-> ${channel}/
    |
    -> pool/
       |
-      -> <distribution>/
+      -> ${distribution}/
          |
-         -> <component>/
+         -> ${component}/
             |
             -> <.deb/.dsc files>
 ```
 
-`channel` is also can be interpreted as `codename` - like `stable` (Debian) or `focal` (Ubuntu).
+`${channel}` is also can be interpreted as `codename` - like `stable` (Debian) or `focal` (Ubuntu).
 
-Example:
+### Example
 
-Consider `$repo_root` set to `/var/www/deb` and `$web` to `http://example.com/deb`.
+Consider following settings:
+```sh
+$repo_root = /var/www/deb
+$web       = http://example.com/deb
+```
 
 We have binary package placed at:
 
@@ -160,14 +173,16 @@ We have binary package placed at:
 /var/www/deb/buster/pool/mongo/3.4/3.4.24-0.2/amd64/mongodb_3.4.24-0.2_amd64.deb
 ```
 
-From here:
-- channel is `buster`
-- distribution is `mongo`
-- component is `3.4`
+Script deduces following statements:
+```sh
+${channel}      = buster
+${distribution} = mongo
+${component}    = 3.4
+```
 
 Script generates following filesystem tree:
 
-```
+```sh
 /var/www/deb/buster/
 |
 -> dists/
@@ -211,9 +226,11 @@ So you can write `apt sources` line just like this:
 deb http://example.com/deb/buster mongo main
 ```
 
+---
+
 ## Implementation details
 
-Script generates/caches some metadata for each `channel` which is stored at `$repo_root/$channel/.meta/`.
+Script generates/caches some metadata for each `$channel` which is stored at `$repo_root/$channel/.meta/`.
 
 These files contains only source/binary packages related information,
 so it's pretty safe to expose them on the web.
@@ -223,6 +240,8 @@ Avoid modifying any of these files, or repository will be logically broken.
 In case of trouble - just remove entire `.meta/` directory and re-run script.
 
 If this doesn't help - feel free to report issue or send pull request (on GitHub). :)
+
+---
 
 ## Few words about GnuPG
 
@@ -248,6 +267,8 @@ local-user <YOUR KEYID>!
 ```
 
 Nota bene: exclamation mark at the end of `<YOUR KEYID>` is mandatory (AFAIK).
+
+---
 
 ## License
 
