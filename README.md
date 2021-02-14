@@ -207,14 +207,14 @@ deb http://example.com/deb/buster mongo main
 
 ## Implementation details
 
-Script generates/caches some metadata for each `channel` which is stored at `$repo_root/$channel/meta/`.
+Script generates/caches some metadata for each `channel` which is stored at `$repo_root/$channel/.meta/`.
 
 These files contains only source/binary packages related information,
 so it's pretty safe to expose them on the web.
 
 Avoid modifying any of these files, or repository will be logically broken.
 
-In case of trouble - just remove entire `meta/` directory and re-run script.
+In case of trouble - just remove entire `.meta/` directory and re-run script.
 
 If this doesn't help - feel free to report issue or send pull request (on GitHub). :)
 

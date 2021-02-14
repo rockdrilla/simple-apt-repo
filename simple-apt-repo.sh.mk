@@ -140,7 +140,7 @@ $(1)/dists/$(2)/$(3)/source/Release: $$(addprefix $(1)/dists/$(2)/$(3)/source/,$
 	echo 'Component: $(3)' ;             \
 	echo 'Architecture: source'
 
-$(1)/dists/$(2)/$(3)/source/Sources: $$(addprefix $(1)/meta/c/$(2)/$(3)/,$$(i/$(1)/$(2)/$(3)/_src))
+$(1)/dists/$(2)/$(3)/source/Sources: $$(addprefix $(1)/.meta/c/$(2)/$(3)/,$$(i/$(1)/$(2)/$(3)/_src))
 	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
 	touch $$(@) ; exec 1>$$(@) ;         \
 	for i in $$(^) ; do cat $$$$i ; echo ; done
@@ -157,7 +157,7 @@ $(1)/dists/$(2)/$(3)/binary-%/Release: $$(addprefix $(1)/dists/$(2)/$(3)/binary-
 $(1)/dists/$(2)/$(3)/binary-%/Packages:
 	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
 	touch $$(@) ; exec 1>$$(@) ;         \
-	for i in $$(addprefix $(1)/meta/c/$(2)/$(3)/,$$(foreach h,$$(i/$(1)/$(2)/$(3)/_bin),$$(if $$(filter $$(*),$$(a/$(1)/$(2)/$(3)/$$(h))),$$(h)))) ; do cat $$$$i ; echo ; done
+	for i in $$(addprefix $(1)/.meta/c/$(2)/$(3)/,$$(foreach h,$$(i/$(1)/$(2)/$(3)/_bin),$$(if $$(filter $$(*),$$(a/$(1)/$(2)/$(3)/$$(h))),$$(h)))) ; do cat $$$$i ; echo ; done
 
 
 $(foreach a,$(a/$(1)/$(2)/$(3)/_), $(eval $(call rules_component_arch,$(1),$(2),$(3),$(a))) )
@@ -322,7 +322,7 @@ deploy:
 	  -type d -exec chmod 755 '{}' '+' ;   \
 	find "$(work_root)/" -xdev -mindepth 1            \
 	  -type d -exec touch -m -d @$(ts_now) '{}' '+' ; \
-	for i in $(foreach k,$(r/_),$(addprefix $(k)/,dists meta)) ; do  \
+	for i in $(foreach k,$(r/_),$(addprefix $(k)/,dists .meta)) ; do  \
 	  mkdir -p $(repo_root)/$$i/ ;                                   \
 	  rsync -ca --delete-after $(work_root)/$$i/ $(repo_root)/$$i/ ; \
 	done ;                                                           \

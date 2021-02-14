@@ -75,7 +75,7 @@ stage1)
 	c=$(csum_f sha1 "$repo_root/$path")
 	printf '%s :=%s\n' "$a" "$c"
 
-	a=$channel/meta/h/$distribution/$component/$hash
+	a=$channel/.meta/h/$distribution/$component/$hash
 	mkdir_p "$a"
 	echo "$c" > "$a"
 
@@ -87,7 +87,7 @@ stage1)
 	fi
 
 	if [ "$k" = '1' ] ; then
-		a=$channel/meta/a/$distribution/$component/$hash
+		a=$channel/.meta/a/$distribution/$component/$hash
 		mkdir_p "$a"
 		cat < "$repo_root/$a" > "$a"
 
@@ -95,11 +95,11 @@ stage1)
 		a=a/$channel/$distribution/$component/$hash
 		printf '%s :=%s\n' "$a" "$c"
 
-		a=$channel/meta/c/$distribution/$component/$hash
+		a=$channel/.meta/c/$distribution/$component/$hash
 		mkdir_p "$a"
 		cat < "$repo_root/$a" > "$a"
 	else
-		a=$channel/meta/c/$distribution/$component/$hash
+		a=$channel/.meta/c/$distribution/$component/$hash
 		mkdir_p "$a"
 		case "$file" in
 		*.dsc) $0 dsc "$work_root" $size "$path" > $a ;;
@@ -116,13 +116,13 @@ stage1)
 		esac
 		printf '%s :=%s\n' "$a" "$c"
 
-		a=$channel/meta/a/$distribution/$component/$hash
+		a=$channel/.meta/a/$distribution/$component/$hash
 		mkdir_p "$a"
 		echo "$c" > "$a"
 	fi
 
 	## kinda hack
-	a=$channel/meta/a/$distribution/$component/$hash
+	a=$channel/.meta/a/$distribution/$component/$hash
 	c=$(cat "$a")
 	case "$c" in
 	source) ;;
@@ -214,7 +214,7 @@ ctrl-arch)
 	exec 0<&-
 
 	cd "$2/"
-	sed -n -E -e '/^Architecture:\s*(.+)\s*$/{s//\1/;p;}' < "$3/meta/c/$4/$5/$6"
+	sed -n -E -e '/^Architecture:\s*(.+)\s*$/{s//\1/;p;}' < "$3/.meta/c/$4/$5/$6"
 
 	exit 0
 	;;
