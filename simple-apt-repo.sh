@@ -8,8 +8,8 @@
 # name='SimpleAptRepo'
 # desc='custom Debian packages for folks'
 # web='http://example.com/deb'
-# GNUPGHOME='/home/user/.gnupg'
-. "$HOME/.config/simplerepo"
+# GNUPGHOME="$HOME/.gnupg"
+. "$HOME/.config/simple-apt-repo"
 
 ###############################################################################
 

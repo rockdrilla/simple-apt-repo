@@ -34,15 +34,9 @@ curl -L -o "$HOME/bin/update-repo.mk" https://github.com/rockdrilla/simple-apt-r
 chmod a+x "$HOME/bin/update-repo"
 
 # setup default (but not valid) config
-[ -f "$HOME/.config/simplerepo" ] || {
-cat > "$HOME/.config/simplerepo" <<EOF
-repo_root='/var/www/deb'
-name='SimpleAptRepo'
-desc='custom Debian packages for folks'
-web='http://example.com/deb'
-GNUPGHOME='$HOME/.gnupg'
-EOF
-echo "edit your config at '$HOME/.config/simplerepo' appropriately"
+[ -f "$HOME/.config/simple-apt-repo" ] || {
+curl -L -o "$HOME/.config/simple-apt-repo" https://github.com/rockdrilla/simple-apt-repo/raw/master/simple-apt-repo.config.example
+echo "edit your config at '$HOME/.config/simple-apt-repo' appropriately"
 }
 
 echo 'installation is done; run script as ~/bin/update-repo'
@@ -109,15 +103,16 @@ if you've set up all things already. ;)
 ### Configuration:
 
 At first, set up simple configuration file in shell syntax (it's sourced by `simple-apt-repo.sh`).
-This file is stored as `~/.config/simplerepo`.
 
-Example configuration:
+This file is stored as `~/.config/simple-apt-repo`.
+
+Example configuration (same as in `simple-apt-repo.config.example`):
 ```sh
 repo_root='/var/www/deb'
 name='SimpleAptRepo'
 desc='custom Debian packages for folks'
 web='http://example.com/deb'
-GNUPGHOME='/home/user/.gnupg'
+GNUPGHOME="$HOME/.gnupg"
 ```
 
 Configuration file doesn't require execution bit to be set, leave it with `0644` rights.
@@ -126,7 +121,7 @@ Brief overview of variables:
 - `repo_root` - REQUIRED: where's your repository is placed (see below *"Filesystem layout"*)
 - `name` - REQUIRED: repository origin ([aptitude](https://en.wikipedia.org/wiki/Aptitude_(software)) search/filter syntax like "`~OSimpleAptRepo`")
 - `desc` - REQUIRED: repository description
-- `web` - REQUIRED: HTTP web root for `repo_root` (set up your web-server accordingly)
+- `web` - REQUIRED: HTTP web root for `repo_root` (set up your web-server accordingly; see below *"Setting up your Web-server"*)
 - `GNUPGHOME` - optional: home folder for your GnuPG setup (see below *"Few words about GnuPG"*)
 
 ---

@@ -1,0 +1,5 @@
+repo_root='/var/www/deb'
+name='SimpleAptRepo'
+desc='custom Debian packages for folks'
+web='http://example.com/deb'
+GNUPGHOME="$HOME/.gnupg"
