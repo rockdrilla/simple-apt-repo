@@ -71,18 +71,18 @@ to your preferred location (e.g. `~/bin/`).
 
 *`simple-apt-repo.sh.mk` - special companion script ([Makefile](https://en.wikipedia.org/wiki/Make_(software)#Makefile)).*
 
-Nota bene: only `simple-apt-repo.sh` requires 'executable' bit set.
+**Nota bene**: only `simple-apt-repo.sh` requires 'executable' bit set.
 
 ---
 
-Hint: you can rename file to whatever you want but also rename helper GNU Make file.
+**Hint**: you can rename file to whatever you want but also rename helper GNU Make file.
 
 Example: if you wish to rename `simple-apt-repo.sh` to `repo-upd`,
 then you'll need to rename `simple-apt-repo.sh.mk` to `repo-upd.mk`.
 
 ---
 
-Hint: symlinks to scripts are working too!
+**Hint**: symlinks to scripts are working too!
 
 Consider following sample shell snippet:
 ```sh
@@ -249,7 +249,7 @@ Be sure that you've set up GnuPG for batch/password-less work.
 
 For this case you'll need to create subkeys without password protection or create another keypair.
 
-Just google a bit around phrase 'setting up gnupg subkeys'. :)
+Just google a bit around phrase `"setting up gnupg subkeys"`. :)
 
 Example configuration (`$GNUPGHOME/gpg.conf`):
 
