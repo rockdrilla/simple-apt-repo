@@ -277,7 +277,7 @@ mkdir -p "$work_root/_tmp.d"
 mkdir -p "$work_root/_common.mk.d"
 mkdir -p "$work_root/_stage1.mk.d"
 
-p='[[:alnum:]][[:alnum:]_-]*'
+p='[[:alnum:]]([^/]*[[:alnum:]])?'
 re="^$repo_root/$p/pool/$p/$p/$p/.*\.(dsc|deb)\$"
 
 ## stage 1 - scan filesystem for packages and grab meta information
