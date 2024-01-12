@@ -267,6 +267,8 @@ Nota bene: exclamation mark at the end of `<YOUR KEYID>` is mandatory (AFAIK).
 
 ## License
 
-BSD 3-Clause
-- [spdx.org](https://spdx.org/licenses/BSD-3-Clause.html)
-- [opensource.org](https://opensource.org/licenses/BSD-3-Clause)
+Apache-2.0
+
+- [spdx.org](https://spdx.org/licenses/Apache-2.0.html)
+- [opensource.org](https://opensource.org/licenses/Apache-2.0)
+- [apache.org](https://www.apache.org/licenses/LICENSE-2.0)

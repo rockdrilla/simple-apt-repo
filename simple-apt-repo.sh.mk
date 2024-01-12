@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
-# SPDX-License-Identifier: BSD-3-Clause
-# (c) 2020, Konstantin Demin
+# SPDX-License-Identifier: Apache-2.0
+# (c) 2020-2024, Konstantin Demin
 
 ifeq (,$(work_root))
 $(error this file is not intended to be ran directly)

@@ -1,6 +1,6 @@
 #!/bin/sh
-# SPDX-License-Identifier: BSD-3-Clause
-# (c) 2020, Konstantin Demin
+# SPDX-License-Identifier: Apache-2.0
+# (c) 2020-2024, Konstantin Demin
 
 ###############################################################################
 
