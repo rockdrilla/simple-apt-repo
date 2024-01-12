@@ -1,10 +1,11 @@
-## About
+# About
 
-`simple-apt-repo.sh` is a shell script written to help generate simple (so far) [APT](https://en.wikipedia.org/wiki/APT_(software)) repository for [Debian GNU/Linux](https://en.wikipedia.org/wiki/Debian) distro and it's derivatives.
+`simple-apt-repo.sh` is a shell script written to help generate simple (so far) [APT](https://en.wikipedia.org/wiki/APT_(software)) repository for [Debian GNU/Linux](https://en.wikipedia.org/wiki/Debian) and it's derivatives.
 
 It's designed to be good for relatively small (IMO?) repositories.
 
 E.g., my own repo (hosted on dual-core virtual private server):
+
 - contains about \~180 packages
 - consumes about 1.5 Gb,
 - full repo rebuild takes about 16 seconds,
@@ -16,35 +17,36 @@ If you're unhappy with this script - try [alternatives](https://wiki.debian.org/
 
 ## Prerequisites / installation
 
-### TL;DR (*copy/paste*):
+### TL;DR (*copy/paste*)
 
 ```sh
 # install dependencies
 sudo apt install make findutils gpg gpgconf xz-utils bzip2 zstd rsync file
 
 # prepare directories
-[ -d "$HOME/bin" ]     || { mkdir -p "$HOME/bin" ;     chmod 0755 "$HOME/bin" ; }
-[ -d "$HOME/.config" ] || { mkdir -p "$HOME/.config" ; chmod 0700 "$HOME/.config" ; }
+[ -d "${HOME}/bin" ]     || { mkdir -p "${HOME}/bin" ;     chmod 0755 "${HOME}/bin" ; }
+[ -d "${HOME}/.config" ] || { mkdir -p "${HOME}/.config" ; chmod 0700 "${HOME}/.config" ; }
 
 # download scripts
-curl -L -o "$HOME/bin/update-repo"    https://github.com/rockdrilla/simple-apt-repo/raw/master/simple-apt-repo.sh
-curl -L -o "$HOME/bin/update-repo.mk" https://github.com/rockdrilla/simple-apt-repo/raw/master/simple-apt-repo.sh.mk
+curl -sSL -o "${HOME}/bin/update-repo"    https://github.com/rockdrilla/simple-apt-repo/raw/main/simple-apt-repo.sh
+curl -sSL -o "${HOME}/bin/update-repo.mk" https://github.com/rockdrilla/simple-apt-repo/raw/main/simple-apt-repo.sh.mk
 
 # set correct permissions for script
-chmod a+x "$HOME/bin/update-repo"
+chmod a+x "${HOME}/bin/update-repo"
 
 # setup default (but not valid) config
-[ -f "$HOME/.config/simple-apt-repo" ] || {
-curl -L -o "$HOME/.config/simple-apt-repo" https://github.com/rockdrilla/simple-apt-repo/raw/master/simple-apt-repo.config.example
-echo "edit your config at '$HOME/.config/simple-apt-repo' appropriately"
+[ -f "${HOME}/.config/simple-apt-repo" ] || {
+curl -sSL -o "${HOME}/.config/simple-apt-repo" https://github.com/rockdrilla/simple-apt-repo/raw/main/simple-apt-repo.config.example
+echo "edit your config at '${HOME}/.config/simple-apt-repo' appropriately"
 }
 
 echo 'installation is done; run script as ~/bin/update-repo'
 ```
 
-### detailed:
+### detailed
 
 `simple-apt-repo.sh` requires that you're already installed following packages:
+
 - `make` - GNU Make;
 - `findutils` - GNU findutils;
 - `gpg` and `gpgconf` - GnuPG (GNU Privacy Guard);
@@ -55,12 +57,13 @@ echo 'installation is done; run script as ~/bin/update-repo'
 - `file` - file type recognition tool (not really needed by this script, just last-resort tool).
 
 Run following command to fulfill these requirements:
+
 ```sh
 sudo apt install make findutils gpg gpgconf xz-utils bzip2 zstd rsync file
 ```
 
-Copy `simple-apt-repo.sh` [[link]](https://github.com/rockdrilla/simple-apt-repo/raw/master/simple-apt-repo.sh)
-and `simple-apt-repo.sh.mk` [[link]](https://github.com/rockdrilla/simple-apt-repo/raw/master/simple-apt-repo.sh.mk)
+Copy `simple-apt-repo.sh` [[link]](https://github.com/rockdrilla/simple-apt-repo/raw/main/simple-apt-repo.sh)
+and `simple-apt-repo.sh.mk` [[link]](https://github.com/rockdrilla/simple-apt-repo/raw/main/simple-apt-repo.sh.mk)
 to your preferred location (e.g. `~/bin/`).
 
 *`simple-apt-repo.sh.mk` - special companion script ([Makefile](https://en.wikipedia.org/wiki/Make_(software)#Makefile)).*
@@ -79,6 +82,7 @@ then you'll need to rename `simple-apt-repo.sh.mk` to `repo-upd.mk`.
 **Hint**: symlinks to scripts are working too!
 
 Consider following sample shell snippet:
+
 ```sh
 # install
 git clone https://github.com/rockdrilla/simple-apt-repo.git ~/apt-repo.git
@@ -100,24 +104,26 @@ git -C ~/apt-repo.git pull
 Just run `simple-apt-repo.sh` with no arguments are required...
 if you've set up all things already. ;)
 
-### Configuration:
+### Configuration
 
 At first, set up simple configuration file in shell syntax (it's sourced by `simple-apt-repo.sh`).
 
 This file is stored as `~/.config/simple-apt-repo`.
 
 Example configuration (same as in `simple-apt-repo.config.example`):
+
 ```sh
 repo_root='/var/www/deb'
 name='SimpleAptRepo'
 desc='custom Debian packages for folks'
-web='http://example.com/deb'
-GNUPGHOME="$HOME/.gnupg"
+web='http://deb.example.com'
+GNUPGHOME="${HOME}/.gnupg"
 ```
 
 Configuration file doesn't require execution bit to be set, leave it with `0644` rights.
 
 Brief overview of variables:
+
 - `repo_root` - REQUIRED: where's your repository is placed (see below *"Filesystem layout"*)
 - `name` - REQUIRED: repository origin ([aptitude](https://en.wikipedia.org/wiki/Aptitude_(software)) search/filter syntax like "`~OSimpleAptRepo`")
 - `desc` - REQUIRED: repository description
@@ -126,9 +132,10 @@ Brief overview of variables:
 
 ---
 
-### Setting up your Web-server:
+### Setting up your Web-server
 
 Here's sample scripts for Nginx:
+
 - `aux/nginx.plain.conf` - serve (browsable) repository via (plain) HTTP
 - `aux/nginx.ssl.conf` - serve (browsable) repository via (plain) HTTP for [APT](https://en.wikipedia.org/wiki/APT_(software)) and via HTTPS for regular users (*he-he, "regular users"* xD)
 
@@ -136,10 +143,10 @@ Here's sample scripts for Nginx:
 
 ## Filesystem layout
 
-`$repo_root` is required to be filled like this:
+`${repo_root}` is required to be filled like this:
 
 ```sh
-$repo_root/
+${repo_root}/
 |
 -> ${channel}/
    |
@@ -157,18 +164,18 @@ $repo_root/
 ### Example
 
 Consider following settings:
+
 ```sh
-$repo_root = /var/www/deb
-$web       = http://example.com/deb
+${repo_root} = /var/www/deb
+${web}       = http://deb.example.com
 ```
 
 We have binary package placed at:
 
-```
-/var/www/deb/buster/pool/mongo/3.4/3.4.24-0.2/amd64/mongodb_3.4.24-0.2_amd64.deb
-```
+`/var/www/deb/buster/pool/mongo/3.4/3.4.24-0.2/amd64/mongodb_3.4.24-0.2_amd64.deb`
 
 Script deduces following statements:
+
 ```sh
 ${channel}      = buster
 ${distribution} = mongo
@@ -209,23 +216,19 @@ Script generates following filesystem tree:
 
 Resulting `apt sources` line will be:
 
-```
-deb http://example.com/deb/buster mongo 3.4
-```
+`deb http://deb.example.com/buster mongo 3.4`
 
 Script also generates 'all-in-one' component `main` for each distribution - **if and only if** distribution doesn't have such component already.
 
 So you can write `apt sources` line just like this:
 
-```
-deb http://example.com/deb/buster mongo main
-```
+`deb http://deb.example.com/buster mongo main`
 
 ---
 
 ## Implementation details
 
-Script generates/caches some metadata for each `$channel` which is stored at `$repo_root/$channel/.meta/`.
+Script generates/caches some metadata for each `${channel}` which is stored at `${repo_root}/${channel}/.meta/`.
 
 These files contains only source/binary packages related information,
 so it's pretty safe to expose them on the web.
@@ -246,9 +249,9 @@ For this case you'll need to create subkeys without password protection or creat
 
 Just google a bit around phrase `"setting up gnupg subkeys"`. :)
 
-Example configuration (`$GNUPGHOME/gpg.conf`):
+Example configuration (`${GNUPGHOME}/gpg.conf`):
 
-```
+```plain
 personal-digest-preferences SHA256
 cert-digest-algo SHA256
 default-preference-list SHA512 SHA384 SHA256 SHA224 AES256 AES192 AES CAST5 ZLIB BZIP2 ZIP Uncompressed
@@ -261,7 +264,7 @@ expert
 local-user <YOUR KEYID>!
 ```
 
-Nota bene: exclamation mark at the end of `<YOUR KEYID>` is mandatory (AFAIK).
+Nota bene: exclamation mark at the end of `<YOUR KEYID>` is mandatory.
 
 ---
 
