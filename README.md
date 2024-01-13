@@ -51,8 +51,8 @@ echo 'installation is done; run script as ~/bin/update-repo'
 - `findutils` - GNU findutils;
 - `gpg` and `gpgconf` - GnuPG (GNU Privacy Guard);
 - `xz-utils` - XZ compression utilities;
-- `bzip2` - Bzip2 compression utilities;
-- `zstd` - ZSTD compression utilities;
+- `bzip2` - (optional) Bzip2 compression utilities;
+- `zstd` - (optional) ZSTD compression utilities;
 - `rsync` - rsync (versatile file-copying tool);
 - `file` - file type recognition tool (not really needed by this script, just last-resort tool).
 
@@ -117,6 +117,7 @@ repo_root='/var/www/deb'
 name='SimpleAptRepo'
 desc='custom Debian packages for folks'
 web='http://deb.example.com'
+comp_list='gz xz bz2 zst'
 GNUPGHOME="${HOME}/.gnupg"
 ```
 
@@ -128,6 +129,7 @@ Brief overview of variables:
 - `name` - REQUIRED: repository origin ([aptitude](https://en.wikipedia.org/wiki/Aptitude_(software)) search/filter syntax like "`~OSimpleAptRepo`")
 - `desc` - REQUIRED: repository description
 - `web` - REQUIRED: HTTP web root for `repo_root` (set up your web-server accordingly; see below *"Setting up your Web-server"*)
+- `comp_list` - optional: compressor suffix list (default: "`gz xz`")
 - `GNUPGHOME` - optional: home folder for your GnuPG setup (see below *"Few words about GnuPG"*)
 
 ---
@@ -168,6 +170,7 @@ Consider following settings:
 ```sh
 ${repo_root} = /var/www/deb
 ${web}       = http://deb.example.com
+${comp_list} = gz zst
 ```
 
 We have binary package placed at:
@@ -204,10 +207,6 @@ Script generates following filesystem tree:
             -> Packages
             |
             -> Packages.gz
-            |
-            -> Packages.xz
-            |
-            -> Packages.bz2
             |
             -> Packages.zst
             |

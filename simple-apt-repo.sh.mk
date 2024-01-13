@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # (c) 2020-2024, Konstantin Demin
 
-ifeq (,$(work_root))
+ifeq (,$(WORK_ROOT))
 $(error this file is not intended to be ran directly)
 endif
 
@@ -16,14 +16,17 @@ SHELL :=/bin/sh
 # MAKEFLAGS +=--no-builtin-variables
 
 define flush_vars=
-$(foreach v/v,$(1),$(eval unexport $(v/v)))
-$(foreach v/v,$(1),$(eval override undefine $(v/v)))
+$(foreach v/v,$(strip $(1)),$(eval unexport $(v/v)))
+$(foreach v/v,$(strip $(1)),$(eval override undefine $(v/v)))
 endef
 
-$(call flush_vars,LANG LANGUAGE LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES)
-$(call flush_vars,LC_NUMERIC LC_TIME POSIXLY_CORRECT GREP_OPTIONS)
+$(call flush_vars, LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE )
+$(call flush_vars, LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS )
+$(call flush_vars, LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION )
+$(call flush_vars, GREP_OPTIONS POSIXLY_CORRECT )
 
 export LC_ALL :=C.UTF-8
+export LANG   :=C.UTF-8
 
 ###############################################################################
 
@@ -35,6 +38,13 @@ dummy:
 ###############################################################################
 
 include _common.mk
+
+name_lc :=$(shell printf '%s' '$(name)' | tr '[:upper:]' '[:lower:]')
+
+keyring_file :=$(name_lc).gpg.asc
+keyring_uri  :=$(web)/$(keyring_file)
+keyring_dir  :=/etc/apt/keyrings
+keyring_path :=$(keyring_dir)/$(keyring_file)
 
 ifeq ($(MAKECMDGOALS),stage2)
 include _stage1.mk.d/*
@@ -52,20 +62,21 @@ endif
 ###############################################################################
 
 %.gz: %
-	@gzip -fk $(<) >/dev/null 2>/dev/null
+	@gzip -9fk $(<) >/dev/null 2>&1
 
 %.xz: %
-	@xz -fk $(<) >/dev/null 2>/dev/null
+	@xz -9fk $(<) >/dev/null 2>&1
 
 %.bz2: %
-	@bzip2 -fk $(<) >/dev/null 2>/dev/null
+	@bzip2 -9fk $(<) >/dev/null 2>&1
 
 %.zst: %
-	@zstd -fk $(<) >/dev/null 2>/dev/null
+	@zstd -9fk $(<) >/dev/null 2>&1
 
 ###############################################################################
 
-mkdir_p =dirname -z "$(1)" | xargs -0 -r mkdir -p
+close_stdin =exec 0<&-
+mkdir_for =mkdir -p '$(dir $(1))'
 
 ###############################################################################
 
@@ -88,13 +99,17 @@ gpg_sign =gpg --sign --armor --output -
 %/Release.gpg: %/Release
 	@$(gpg_sign) --detach-sign $(<) > $(@)
 
-%/sources.list:
-	@$(call mkdir_p,$(@)); exec 0<&- ; \
+%/apt.sources:
+	@:; $(close_stdin) ; $(call mkdir_for,$(@)) ; \
 	cat $(sort $(^)) > $(@)
 
-sources.list:
-	@exec 0<&- ; \
+apt.sources:
+	@:; $(close_stdin) ; \
 	cat $(sort $(^)) > $(@)
+
+$(keyring_file):
+	@:; $(close_stdin) ; \
+	gpg --export --armor > $(@)
 
 ###############################################################################
 
@@ -102,7 +117,7 @@ define rules_component_arch =
 
 ifeq (,$(filter main,$(r/$(1)/$(2)/_)))
 
-$(1)/dists/$(2)/main/sources.list: $(1)/dists/$(2)/$(3)/sources.list
+$(1)/dists/$(2)/main/apt.sources: $(1)/dists/$(2)/$(3)/apt.sources
 
 $(1)/dists/$(2)/main/source/Sources: $(1)/dists/$(2)/$(3)/source/Sources
 
@@ -110,54 +125,60 @@ $(1)/dists/$(2)/main/source/Release: $(1)/dists/$(2)/$(3)/source/Release
 
 $(1)/dists/$(2)/main/binary-$(4)/Packages: $(1)/dists/$(2)/$(3)/binary-$(4)/Packages
 
-$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/main/binary-$(4)/,Release Packages $(foreach x,gz xz bz2 zst,Packages.$(x)))
+$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/main/binary-$(4)/,Release Packages $(foreach x,$(comp_list),Packages.$(x)))
 
 endif
 
-$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/$(3)/binary-$(4)/,Release Packages $(foreach x,gz xz bz2 zst,Packages.$(x)))
+$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/$(3)/binary-$(4)/,Release Packages $(foreach x,$(comp_list),Packages.$(x)))
 
 endef
 
 define rules_component =
 
-$(1)/dists/$(2)/sources.list: $(1)/dists/$(2)/$(3)/sources.list
+$(1)/dists/$(2)/apt.sources: $(1)/dists/$(2)/$(3)/apt.sources
 
-$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/$(3)/source/,Release Sources $(foreach x,gz xz bz2 zst,Sources.$(x)))
+$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/$(3)/source/,Release Sources $(foreach x,$(comp_list),Sources.$(x)))
 
-$(1)/dists/$(2)/$(3)/sources.list: | $(1)/dists/$(2)/$(3)/source/Release $$(foreach a,$$(a/$(1)/$(2)/$(3)/_),$(1)/dists/$(2)/$(3)/binary-$$(a)/Release)
-	@$$(call mkdir_p,$$(@)); exec 0<&- ;     \
-	touch $$(@) ; exec 1>$$(@) ;             \
-	echo "## arch: $$(a/$(1)/$(2)/$(3)/_)" ; \
-	echo "# deb $$(web)/$(1) $(2) $(3)"    ; \
+$(1)/dists/$(2)/$(3)/apt.sources: | $(1)/dists/$(2)/$(3)/source/Release $$(foreach a,$$(a/$(1)/$(2)/$(3)/_),$(1)/dists/$(2)/$(3)/binary-$$(a)/Release)
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ; \
+	echo '# Types: deb' ; \
+	echo '# URIs: $$(web)/$(1)' ; \
+	echo '# Suites: $(2)' ; \
+	echo '# Components: $(3)' ; \
+	echo '# Architectures: $$(a/$(1)/$(2)/$(3)/_)' ; \
+	echo '## sudo mkdir -p $$(keyring_dir)' ; \
+	echo '## sudo curl -sSL -o $$(keyring_path) $$(keyring_uri)' ; \
+	echo '# Signed-By: $$(keyring_path)' ; \
 	echo
 
-$(1)/dists/$(2)/$(3)/source/Release: $$(addprefix $(1)/dists/$(2)/$(3)/source/,$(foreach x,gz xz bz2 zst,Sources.$(x)))
-	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
-	touch $$(@) ; exec 1>$$(@) ;         \
-	echo 'Archive: $(2)' ;               \
-	echo 'Origin: $$(name)' ;            \
-	echo 'Label: $$(name)' ;             \
-	echo 'Component: $(3)' ;             \
+$(1)/dists/$(2)/$(3)/source/Release: $$(addprefix $(1)/dists/$(2)/$(3)/source/,$(foreach x,$(comp_list),Sources.$(x)))
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ; \
+	echo 'Archive: $(2)' ; \
+	echo 'Origin: $$(name)' ; \
+	echo 'Label: $$(name)' ; \
+	echo 'Component: $(3)' ; \
 	echo 'Architecture: source'
 
 $(1)/dists/$(2)/$(3)/source/Sources: $$(addprefix $(1)/.meta/c/$(2)/$(3)/,$$(i/$(1)/$(2)/$(3)/_src))
-	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
-	touch $$(@) ; exec 1>$$(@) ;         \
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ; \
 	for i in $$(^) ; do cat $$$$i ; echo ; done
 
-$(1)/dists/$(2)/$(3)/binary-%/Release: $$(addprefix $(1)/dists/$(2)/$(3)/binary-%/,$(foreach x,gz xz bz2 zst,Packages.$(x)))
-	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
-	touch $$(@) ; exec 1>$$(@) ;         \
-	echo 'Archive: $(2)' ;               \
-	echo 'Origin: $$(name)' ;            \
-	echo 'Label: $$(name)' ;             \
-	echo 'Component: $(3)' ;             \
+$(1)/dists/$(2)/$(3)/binary-%/Release: $$(addprefix $(1)/dists/$(2)/$(3)/binary-%/,$(foreach x,$(comp_list),Packages.$(x)))
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ; \
+	echo 'Archive: $(2)' ; \
+	echo 'Origin: $$(name)' ; \
+	echo 'Label: $$(name)' ; \
+	echo 'Component: $(3)' ; \
 	echo 'Architecture: $$(*)'
 
 $(1)/dists/$(2)/$(3)/binary-%/Packages:
-	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
-	touch $$(@) ; exec 1>$$(@) ;         \
-	for i in $$(addprefix $(1)/.meta/c/$(2)/$(3)/,$$(foreach h,$$(i/$(1)/$(2)/$(3)/_bin),$$(if $$(filter $$(*),$$(a/$(1)/$(2)/$(3)/$$(h))),$$(h)))) ; do cat $$$$i ; echo ; done
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ; \
+	for i in $$(addprefix $(1)/.meta/c/$(2)/$(3)/,$$(foreach h,$$(i/$(1)/$(2)/$(3)/_bin),$$(if $$(filter $$(*),$$(a/$(1)/$(2)/$(3)/$$(h))),$$(h)))) ; do cat "$$$$i" ; echo ; done
 
 
 $(foreach a,$(a/$(1)/$(2)/$(3)/_), $(eval $(call rules_component_arch,$(1),$(2),$(3),$(a))) )
@@ -167,102 +188,108 @@ endef
 
 define rules_distrubution =
 
-$(1)/sources.list: $(1)/dists/$(2)/sources.list
+$(1)/apt.sources: $(1)/dists/$(2)/apt.sources
 
-$(1)/dists/$(2)/sources.list: | $$(addprefix $(1)/dists/$(2)/,InRelease Release.gpg)
+$(1)/dists/$(2)/apt.sources: | $$(addprefix $(1)/dists/$(2)/,InRelease Release.gpg)
 
 ifeq (,$(filter main,$(r/$(1)/$(2)/_)))
 
-$(1)/dists/$(2)/sources.list: $(1)/dists/$(2)/main/sources.list
+$(1)/dists/$(2)/apt.sources: $(1)/dists/$(2)/main/apt.sources
 
-$(1)/dists/$(2)/main/sources.list:
-	@$$(call mkdir_p,$$(@)); exec 0<&- ;  \
-	touch $$(@) ; exec 1>$$(@) ;          \
-	echo "## arch: $$(a/$(1)/$(2)/_)" ;   \
-	echo "# deb $$(web)/$(1) $(2) main" ; \
+$(1)/dists/$(2)/main/apt.sources:
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ; \
+	echo '# Types: deb' ; \
+	echo '# URIs: $$(web)/$(1)' ; \
+	echo '# Suites: $(2)' ; \
+	echo '# Components: main' ; \
+	echo '# Architectures: $$(a/$(1)/$(2)/_)' ; \
+	echo '## sudo mkdir -p $$(keyring_dir)' ; \
+	echo '## sudo curl -sSL -o $$(keyring_path) $$(keyring_uri)' ; \
+	echo '# Signed-By: $$(keyring_path)' ; \
 	echo
 
 $(1)/dists/$(2)/main/source/Release:
-	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
-	touch $$(@) ; exec 1>$$(@) ;         \
-	echo 'Archive: $(2)' ;               \
-	echo 'Origin: $$(name)' ;            \
-	echo 'Label: $$(name)' ;             \
-	echo 'Component: main' ;             \
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ; \
+	echo 'Archive: $(2)' ; \
+	echo 'Origin: $$(name)' ; \
+	echo 'Label: $$(name)' ; \
+	echo 'Component: main' ; \
 	echo 'Architecture: source'
 
 $(1)/dists/$(2)/main/source/Sources:
-	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
-	touch $$(@) ; exec 1>$$(@) ;         \
-	for i in $$(^) ; do cat $$$$i ; echo ; done
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ; \
+	for i in $$(^) ; do cat "$$$$i" ; echo ; done
 
-$(1)/dists/$(2)/main/binary-%/Release: $$(addprefix $(1)/dists/$(2)/main/binary-%/,$(foreach x,gz xz bz2 zst,Packages.$(x)))
-	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
-	touch $$(@) ; exec 1>$$(@) ;         \
-	echo 'Archive: $(2)' ;               \
-	echo 'Origin: $$(name)' ;            \
-	echo 'Label: $$(name)' ;             \
-	echo 'Component: main' ;             \
+$(1)/dists/$(2)/main/binary-%/Release: $$(addprefix $(1)/dists/$(2)/main/binary-%/,$(foreach x,$(comp_list),Packages.$(x)))
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ; \
+	echo 'Archive: $(2)' ; \
+	echo 'Origin: $$(name)' ; \
+	echo 'Label: $$(name)' ; \
+	echo 'Component: main' ; \
 	echo 'Architecture: $$(*)'
 
 $(1)/dists/$(2)/main/binary-%/Packages:
-	@$$(call mkdir_p,$$(@)); exec 0<&- ; \
-	touch $$(@) ; exec 1>$$(@) ;         \
-	for i in $$(^) ; do cat $$$$i ; echo ; done
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ;          \
+	for i in $$(^) ; do cat "$$$$i" ; echo ; done
 
-$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/main/source/,Release Sources $(foreach x,gz xz bz2 zst,Sources.$(x)))
+$(1)/dists/$(2)/Release: $$(addprefix $(1)/dists/$(2)/main/source/,Release Sources $(foreach x,$(comp_list),Sources.$(x)))
 
-$(1)/dists/$(2)/Release.head:
-	@$$(call mkdir_p,$$(@)); exec 0<&- ;        \
-	touch $$(@) ; exec 1>$$(@) ;                \
-	echo 'Origin: $$(name)' ;                   \
-	echo 'Label: $$(name)' ;                    \
-	echo 'Description: $$(desc)' ;              \
-	echo 'Suite: $(2)' ;                        \
-	echo 'Codename: $(2)' ;                     \
-	echo 'Architectures: $$(a/$(1)/$(2)/_)' ;   \
+$(1)/dists/$(2)/.head.Release:
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ; \
+	echo 'Origin: $$(name)' ; \
+	echo 'Label: $$(name)' ; \
+	echo 'Description: $$(desc)' ; \
+	echo 'Suite: $(2)' ; \
+	echo 'Codename: $(2)' ; \
+	echo 'Architectures: $$(a/$(1)/$(2)/_)' ; \
 	echo 'Components: main $$(r/$(1)/$(2)/_)' ; \
-	echo 'Date: $$(date_now)' ;                 \
+	echo 'Date: $$(date_now)' ; \
 	echo 'Valid-Until: $$(date_end)'
 
 else
 
-$(1)/dists/$(2)/Release.head:
-	@$$(call mkdir_p,$$(@)); exec 0<&- ;        \
-	touch $$(@) ; exec 1>$$(@) ;                \
-	echo 'Origin: $$(name)' ;                   \
-	echo 'Label: $$(name)' ;                    \
-	echo 'Description: $$(desc)' ;              \
-	echo 'Suite: $(2)' ;                        \
-	echo 'Codename: $(2)' ;                     \
-	echo 'Architectures: $$(a/$(1)/$(2)/_)' ;   \
-	echo 'Components: $$(r/$(1)/$(2)/_)' ;      \
-	echo 'Date: $$(date_now)' ;                 \
+$(1)/dists/$(2)/.head.Release:
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	touch $$(@) ; exec >$$(@) ; \
+	echo 'Origin: $$(name)' ; \
+	echo 'Label: $$(name)' ; \
+	echo 'Description: $$(desc)' ; \
+	echo 'Suite: $(2)' ; \
+	echo 'Codename: $(2)' ; \
+	echo 'Architectures: $$(a/$(1)/$(2)/_)' ; \
+	echo 'Components: $$(r/$(1)/$(2)/_)' ; \
+	echo 'Date: $$(date_now)' ; \
 	echo 'Valid-Until: $$(date_end)'
 
 endif
 
-$(1)/dists/$(2)/Release: | $(1)/dists/$(2)/Release.head
+$(1)/dists/$(2)/Release: | $(1)/dists/$(2)/.head.Release
 
 $(1)/dists/$(2)/Release:
-	@$$(call mkdir_p,$$(@)); exec 0<&- ;                                  \
-	a=$$$$(mktemp -p "$$(work_root)/_tmp.d") ; echo 'MD5Sum:' > "$$$$a" ; \
-	b=$$$$(mktemp -p "$$(work_root)/_tmp.d") ; echo 'SHA1:'   > "$$$$b" ; \
-	c=$$$$(mktemp -p "$$(work_root)/_tmp.d") ; echo 'SHA256:' > "$$$$c" ; \
-	z=$$$$(mktemp -p "$$(work_root)/_tmp.d") ;                            \
-	echo $$(^) | xargs -r -n 1 | sort -V > "$$$$z" ;                      \
-	while read -r f ; do                                                  \
-	    s=$$$$(stat -c '%s' "$$$$f") ;                                    \
-	    k=$$$$(md5sum    -b < "$$$$f" | cut -d ' ' -f 1) ;                \
-	    l=$$$$(sha1sum   -b < "$$$$f" | cut -d ' ' -f 1) ;                \
-	    m=$$$$(sha256sum -b < "$$$$f" | cut -d ' ' -f 1) ;                \
-	    f=$$$$(echo -n "$$$$f" | cut -d / -f 4-) ;                        \
-	    printf ' %s %9s %s\n' "$$$$k" "$$$$s" "$$$$f" >> "$$$$a" ;        \
-	    printf ' %s %9s %s\n' "$$$$l" "$$$$s" "$$$$f" >> "$$$$b" ;        \
-	    printf ' %s %9s %s\n' "$$$$m" "$$$$s" "$$$$f" >> "$$$$c" ;        \
-	done < "$$$$z" ;                                                      \
-	touch $$(@) ; exec 1>$$(@) ;                                          \
-	cat $$(@).head ; cat "$$$$a" ; cat "$$$$b" ; cat "$$$$c" ;            \
+	@:; $$(close_stdin) ; $$(call mkdir_for,$$(@)); \
+	a=$$$$(mktemp -p "$$(WORK_ROOT)/_tmp.d") ; echo 'MD5Sum:' > "$$$$a" ; \
+	b=$$$$(mktemp -p "$$(WORK_ROOT)/_tmp.d") ; echo 'SHA1:'   > "$$$$b" ; \
+	c=$$$$(mktemp -p "$$(WORK_ROOT)/_tmp.d") ; echo 'SHA256:' > "$$$$c" ; \
+	z=$$$$(mktemp -p "$$(WORK_ROOT)/_tmp.d") ; \
+	echo $$(^) | xargs -r -n 1 | sort -uV > "$$$$z" ; \
+	while read -r f ; do \
+	    s=$$$$(stat -Lc '%s' "$$$$f") ; \
+	    k=$$$$(md5sum    -b < "$$$$f" | cut -d ' ' -f 1) ; \
+	    l=$$$$(sha1sum   -b < "$$$$f" | cut -d ' ' -f 1) ; \
+	    m=$$$$(sha256sum -b < "$$$$f" | cut -d ' ' -f 1) ; \
+	    f=$$$$(printf '%s' "$$$$f" | cut -d / -f 4-) ; \
+	    printf ' %s %9s %s\n' "$$$$k" "$$$$s" "$$$$f" >> "$$$$a" ; \
+	    printf ' %s %9s %s\n' "$$$$l" "$$$$s" "$$$$f" >> "$$$$b" ; \
+	    printf ' %s %9s %s\n' "$$$$m" "$$$$s" "$$$$f" >> "$$$$c" ; \
+	done < "$$$$z" ; \
+	touch $$(@) ; exec >$$(@) ; \
+	cat $$(dir $$(@)).head.$$(notdir $$(@)) "$$$$a" "$$$$b" "$$$$c" ; \
 	rm -f "$$$$z" "$$$$a" "$$$$b" "$$$$c"
 
 
@@ -273,7 +300,7 @@ endef
 
 define rules_channel =
 
-sources.list: $(1)/sources.list
+apt.sources: $(1)/apt.sources
 
 $(foreach d,$(r/$(1)/_), $(eval $(call rules_distrubution,$(1),$(d))) )
 
@@ -284,7 +311,7 @@ ifeq ($(MAKECMDGOALS),update)
 
 $(foreach c/c,$(r/_), $(eval $(call rules_channel,$(c/c))) )
 
-update: sources.list
+update: apt.sources
 
 endif
 
@@ -292,11 +319,11 @@ endif
 
 .PHONY: stage2
 stage2:
-	@exec 1>_stage2.mk ; \
+	@exec >_stage2.mk ; \
 	$(foreach v/v, \
 	  $(sort $(foreach v/v,$(.VARIABLES), \
 	    $(if \
-	      $(shell echo -n '$(v/v)' | grep -Fq '/_' && echo x || true), \
+	      $(shell printf '%s' '$(v/v)' | grep -Fq '/_' && echo x || true), \
 	      $(v/v) \
 	    ) \
 	  )), \
@@ -312,18 +339,18 @@ update:
 ###############################################################################
 
 .PHONY: deploy
-deploy:
+deploy: $(keyring_file)
 	@:; \
-	find "$(work_root)/" -xdev -mindepth 1 \
-	  -type f -exec chmod 644 '{}' '+' ;   \
-	find "$(work_root)/" -xdev -mindepth 1            \
+	find '$(WORK_ROOT)/' -xdev -mindepth 1 \
+	  -type f -exec chmod 0644 '{}' '+' ; \
+	find '$(WORK_ROOT)/' -xdev -mindepth 1 \
 	  -type f -exec touch -m -d @$(ts_now) '{}' '+' ; \
-	find "$(work_root)/" -xdev -mindepth 1 \
-	  -type d -exec chmod 755 '{}' '+' ;   \
-	find "$(work_root)/" -xdev -mindepth 1            \
+	find '$(WORK_ROOT)/' -xdev -mindepth 1 \
+	  -type d -exec chmod 0755 '{}' '+' ; \
+	find '$(WORK_ROOT)/' -xdev -mindepth 1 \
 	  -type d -exec touch -m -d @$(ts_now) '{}' '+' ; \
-	for i in $(foreach k,$(r/_),$(addprefix $(k)/,dists .meta)) ; do  \
-	  mkdir -p $(repo_root)/$$i/ ;                                   \
-	  rsync -ca --delete-after $(work_root)/$$i/ $(repo_root)/$$i/ ; \
-	done ;                                                           \
-	cp -a sources.list $(repo_root)/
+	for i in $(foreach k,$(r/_),$(addprefix $(k)/,dists .meta)) ; do \
+	  mkdir -p $(repo_root)/$$i/ ; \
+	  rsync -ca --delete-after $(WORK_ROOT)/$$i/ $(repo_root)/$$i/ ; \
+	done ; \
+	cp -a apt.sources $(keyring_file) $(repo_root)/

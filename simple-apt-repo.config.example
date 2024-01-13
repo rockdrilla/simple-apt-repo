@@ -2,4 +2,5 @@ repo_root='/var/www/deb'
 name='SimpleAptRepo'
 desc='custom Debian packages for folks'
 web='http://deb.example.com'
+comp_list='gz xz bz2 zst'
 GNUPGHOME="${HOME}/.gnupg"
